@@ -1,9 +1,12 @@
 import Vue from "vue";
 import Router from "vue-router";
+import findLast from "lodash/findLast";
 //import RenderRouterView from "_c/RenderRouterView.vue";
 import NotFound from "@/views/404";
+import Forbidden from "@/views/403";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
+import { check, isLogin } from "./util/auth";
 
 Vue.use(Router);
 
@@ -25,12 +28,14 @@ const router = new Router({
         {
           path: "/user/login",
           name: "login",
+          hideInMenu: true,
           component: () =>
             import(/* webpackChunkName: "user" */ "./views/User/Login.vue")
         },
         {
           path: "/user/register",
           name: "register",
+          hideInMenu: true,
           component: () =>
             import(/* webpackChunkName: "user" */ "./views/User/Register")
         }
@@ -38,6 +43,7 @@ const router = new Router({
     },
     {
       path: "/",
+      meta: { authority: ["admin", "user"] },
       component: () =>
         import(/* webpackChunkName: "layout" */ "@/layouts/BasicLayout"),
       children: [
@@ -45,12 +51,14 @@ const router = new Router({
         {
           path: "/dashboard",
           name: "dashboard",
+          meta: { icon: "dashboard", title: "仪表盘" },
           redirect: "/dashboard/workplace",
           component: { render: h => h("router-view") },
           children: [
             {
               path: "/dashboard/analysis",
               name: "Analysis",
+              meta: { title: "分析页" },
               component: () => import("@/views/dashboard/Analysis")
             },
             // 外部链接
@@ -62,30 +70,36 @@ const router = new Router({
             {
               path: "/dashboard/workplace",
               name: "Workplace",
-              component: { render: h => h("router-view") }
+              component: { render: h => h("router-view") },
+              meta: { title: "工作台", target: "_blank" }
             }
           ]
         },
         // forms
         {
           path: "/form",
+          name: "form",
           redirect: "/form/base-form",
           component: { render: h => h("router-view") },
-          meta: { title: "表单页", icon: "form", permission: ["form"] },
+          meta: { title: "表单页", icon: "form", authority: ["form", "admin"] },
           children: [
             {
               path: "/form/base-form",
               name: "BaseForm",
+              meta: { title: "基础表单" },
+              hideChildrenMenu: true,
               component: () => import("@/views/form/BasicForm")
             },
             {
               path: "/form/step-form",
               name: "StepForm",
+              meta: { title: "分步表单" },
               component: () => import("@/views/form/stepForm/StepForm")
             },
             {
               path: "/form/advanced-form",
               name: "AdvanceForm",
+              meta: { title: "高级表单" },
               component: () => import("@/views/form/advancedForm/AdvancedForm")
             }
           ]
@@ -93,15 +107,37 @@ const router = new Router({
       ]
     },
     {
+      path: "/403",
+      name: 403,
+      hideInMenu: true,
+      component: Forbidden
+    },
+    {
       path: "*",
       name: 404,
+      hideInMenu: true,
       component: NotFound
     }
   ]
 });
 
 router.beforeEach((to, from, next) => {
-  NProgress.start();
+  if (to.path !== from.path) {
+    NProgress.start();
+  }
+  const record = findLast(to.matched, record => record.meta.authority);
+  if (record && !check(record.meta.authority)) {
+    if (!isLogin() && to.path !== "/user/login") {
+      next({
+        path: "/user/login"
+      });
+    } else if (to.path !== "/403") {
+      next({
+        path: "/403"
+      });
+    }
+    NProgress.done();
+  }
   next();
 });
 
