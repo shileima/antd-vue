@@ -4,6 +4,7 @@ import findLast from "lodash/findLast";
 //import RenderRouterView from "_c/RenderRouterView.vue";
 import NotFound from "@/views/404";
 import Forbidden from "@/views/403";
+import {notification} from "ant-design-vue";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 import { check, isLogin } from "./util/auth";
@@ -137,6 +138,10 @@ router.beforeEach((to, from, next) => {
         path: "/user/login"
       });
     } else if (to.path !== "/403") {
+      notification.error({
+        message: "403 无权限",
+        description: "请联系管理员添加权限！"
+      });
       next({
         path: "/403"
       });
