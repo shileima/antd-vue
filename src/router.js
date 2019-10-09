@@ -51,14 +51,18 @@ const router = new Router({
         {
           path: "/dashboard",
           name: "dashboard",
-          meta: { icon: "dashboard", title: "仪表盘" },
+          meta: {
+            icon: "dashboard",
+            title: "仪表盘",
+            authority: ["admin", "user"]
+          },
           redirect: "/dashboard/workplace",
           component: { render: h => h("router-view") },
           children: [
             {
               path: "/dashboard/analysis",
               name: "Analysis",
-              meta: { title: "分析页" },
+              meta: { title: "分析页", authority: ["admin"] },
               component: () => import("@/views/dashboard/Analysis")
             },
             // 外部链接
@@ -81,25 +85,25 @@ const router = new Router({
           name: "form",
           redirect: "/form/base-form",
           component: { render: h => h("router-view") },
-          meta: { title: "表单页", icon: "form", authority: ["form", "admin"] },
+          meta: { title: "表单页", icon: "form", authority: ["user"] },
           children: [
             {
               path: "/form/base-form",
               name: "BaseForm",
-              meta: { title: "基础表单" },
+              meta: { title: "基础表单", authority: ["user"] },
               hideChildrenMenu: true,
               component: () => import("@/views/form/BasicForm")
             },
             {
               path: "/form/step-form",
               name: "StepForm",
-              meta: { title: "分步表单" },
+              meta: { title: "分步表单", authority: ["user"] },
               component: () => import("@/views/form/stepForm/StepForm")
             },
             {
               path: "/form/advanced-form",
               name: "AdvanceForm",
-              meta: { title: "高级表单" },
+              meta: { title: "高级表单",authority: ["user"] },
               component: () => import("@/views/form/advancedForm/AdvancedForm")
             }
           ]
@@ -122,6 +126,7 @@ const router = new Router({
 });
 
 router.beforeEach((to, from, next) => {
+  console.log(to)
   if (to.path !== from.path) {
     NProgress.start();
   }

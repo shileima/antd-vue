@@ -1,10 +1,11 @@
 export function getCurrentAuthority() {
-  return ["admin"];
+  return ["admin", "user"];
 }
 
 export function check(authority) {
+  console.log(authority);
   const current = getCurrentAuthority();
-  return current.some(item => authority.includes(item))
+  return current.some(item => authority.includes(item));
 }
 
 export function isLogin() {

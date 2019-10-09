@@ -22,6 +22,7 @@
  * SubMenu1.vue https://github.com/vueComponent/ant-design-vue/blob/master/components/menu/demo/SubMenu1.vue
  * */
 import SubMenu from "./SubMenu";
+import {check} from '../util/auth';
 export default {
   props: {
     theme: {
@@ -59,36 +60,38 @@ export default {
     },
     getMenuData(routes = [], parentKeys = [], selectedKeys) {
       const menuData = [];
-      routes.forEach(route => {
+      for(let route of routes){
+        if(route.meta && route.meta.authority && !check(route.meta.authority)){
+          break;  
+        }
         if (route.name && !route.hideInMenu) {
-          this.openKeysMap[route.path] = parentKeys;
-          this.selectedKeysMap[route.path] = [selectedKeys || route.path];
-          const newRoute = { ...route };
-          delete newRoute.children;
-          if (route.children && !route.hideChildrenMenu) {
-            newRoute.children = this.getMenuData(route.children, [
-              ...parentKeys,
-              route.path
-            ]);
-          } else {
-            this.getMenuData(
-              route.children,
-              selectedKeys ? parentKeys : [...parentKeys, route.path],
-              selectedKeys || route.path
+            this.openKeysMap[route.path] = parentKeys;
+            this.selectedKeysMap[route.path] = [selectedKeys || route.path];
+            const newRoute = { ...route };
+            delete newRoute.children;
+            if (route.children && !route.hideChildrenMenu) {
+              newRoute.children = this.getMenuData(route.children, [
+                ...parentKeys,
+                route.path
+              ]);
+            } else {
+              this.getMenuData(
+                route.children,
+                selectedKeys ? parentKeys : [...parentKeys, route.path],
+                selectedKeys || route.path
+              );
+            }
+            menuData.push(newRoute);
+          } else if (
+            !route.hideInMenu &&
+            !route.hideChildrenMenu &&
+            route.children
+          ) {
+            menuData.push(
+              ...this.getMenuData(route.children, [...parentKeys, route.path])
             );
           }
-          menuData.push(newRoute);
-        } else if (
-          !route.hideInMenu &&
-          !route.hideChildrenMenu &&
-          route.children
-        ) {
-          menuData.push(
-            ...this.getMenuData(route.children, [...parentKeys, route.path])
-          );
-        }
-      });
-      console.log(menuData);
+      }
       return menuData;
     }
   }
